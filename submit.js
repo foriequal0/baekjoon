@@ -68,15 +68,20 @@ async function submit(page, no, langCode, codeOpen, source) {
         document.querySelector(`#code_open_${codeOpen}`).checked = true;
     }, langCode, codeOpen, source);
 
-    const clipboard = await clipboardy.read();
-    try {
-        await clipboardy.write(source);
-        await page.keyboard.down("Control");
-        await page.keyboard.press("KeyV");
-        await page.keyboard.up("Control");
-    } finally {
-        await clipboardy.write(clipboard);
+    await page.type(".CodeMirror", source);
+
+    // 자동완성된 괄호짝 삭제
+    await page.keyboard.down("Control");
+    let previousContent = null;
+    while (true) {
+        await page.keyboard.press("Delete");
+        const content = page.$(".CodeMirror").innerText;
+        if (content === previousContent) {
+            break;
+        }
+        previousContent = content;
     }
+    await page.keyboard.up("Control");
 
     console.log("제출 버튼 활성화 대기중");
     await page.waitForFunction(() => {
