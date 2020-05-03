@@ -33,10 +33,10 @@ async function main({executable, cookies, headless, no, language, codeOpen, sour
         waitUntil: "load",
     };
 
-    await page.goto("https://www.acmicpc.net/login", waitUntilLoad);
     if (await loadCookie(page, cookies)) {
         await page.reload(waitUntilLoad);
     }
+    await page.goto(`https://www.acmicpc.net/login?next=%2Fsubmit%2F${no}`, waitUntilLoad);
     if (page.url().includes("login")) {
         console.log("로그인에 문제가 생겼습니다. 다시 로그인하세요.");
         await waitForUserIntervention("login"); // 로그인, 쿠키 만료, re-captcha
