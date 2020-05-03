@@ -8,7 +8,7 @@ const yargs = require("yargs");
 const {languages} = require("./languages");
 const {fork, handleError} = require("./spawn_util");
 
-async function main({no, language, variant}) {
+async function main({no, language, variant, headless}) {
     const source = languages.find(x => x.name === language).source;
     const input = path.join(no.toString());
     const dir = variant
@@ -16,11 +16,15 @@ async function main({no, language, variant}) {
         : path.join(no.toString(), language);
 
     await fork("./execute.js", [language, dir, input]);
-    await fork("./submit.js", [
+    const submitArgs = [
         path.join(dir, source),
         "--no", no.toString(),
         "--language", language,
-    ]);
+    ];
+    if (headless !== undefined) {
+        submitArgs.push("--headless");
+    }
+    await fork("./submit.js", submitArgs);
 }
 
 const args = yargs
@@ -40,6 +44,10 @@ const args = yargs
                 type: "string",
                 describe: "변형 풀이",
             })
+    })
+    .option("headless", {
+        type: "boolean",
+        describe: "헤드리스 제출",
     })
     .help()
     .argv;

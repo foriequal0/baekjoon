@@ -12,17 +12,18 @@ const {handleError} = require("./spawn_util");
 /**
  * @param {string} executable
  * @param {string} cookies
+ * @param {boolean} headless
  * @param {number} no
  * @param {string} language
  * @param {string} codeOpen
  * @param {string} source
  * @returns {Promise<void>}
  */
-async function main({executable, cookies, no, language, codeOpen, source}) {
+async function main({executable, cookies, headless, no, language, codeOpen, source}) {
     const langCode = languages.find(({name}) => name === language).id;
 
     const browser = await puppeteer.launch({
-        headless: false,
+        headless,
         defaultViewport: null,
         executablePath: executable,
     });
@@ -50,6 +51,11 @@ async function main({executable, cookies, no, language, codeOpen, source}) {
 
     console.log("완료");
     await dumpCookie(page, cookies);
+
+    console.log("결과");
+    await printResult(page);
+
+    browser.close();
 }
 
 /**
@@ -106,6 +112,24 @@ async function waitForUserIntervention(page, fragment) {
         process.stdout.write(".");
         await sleep(1000);
     }
+}
+
+async function printResult(page) {
+    await page.waitForFunction(() => {
+        const row = document.querySelector("tbody tr");
+        return row.querySelector(".result").innerText !== "기다리는 중";
+    }, {
+        polling: 1000,
+        timeout: 0,
+    });
+    const row = await page.$("tbody tr");
+    const id = await row.evaluate(e => e.id);
+    const result = await row.$eval(".result", e => e.innerText);
+    const memory = await row.$eval(".memory", e => e.innerText);
+    const time = await row.$eval(".time", e => e.innerText);
+    console.log({
+        id, result, memory, time
+    });
 }
 
 /**
@@ -177,6 +201,10 @@ const args = yargs
         normalize: true,
         describe: "`cookies.json` 파일 경로",
     })
+    .option("headless", {
+        type: "boolean",
+        describe: "헤드리스 제출",
+    })
     .help()
     .argv;
 
@@ -185,4 +213,6 @@ const source =
         ? fs.readFileSync(0, "utf8")
         : fs.readFileSync(args.source, "utf8");
 
-main({...args, source}).catch(handleError);
+const headless = args.headless || fs.existsSync(args.cookies);
+
+main({...args, source, headless}).catch(handleError);
