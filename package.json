@@ -6,7 +6,7 @@
     "clipboardy": "^2.3.0",
     "jsdom": "^16.2.2",
     "puppeteer-core": "^3.0.2",
-    "shell-quote": "^1.7.2",
+    "shell-quote": "^1.7.3",
     "superagent": "^5.2.2",
     "which": "^2.0.2",
     "yargs": "^15.3.1"
